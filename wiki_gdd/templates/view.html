@@ -8,9 +8,11 @@
         <em>By: <a href="/user/{{ author_email }}">{{ author }} </a></em>
     {% endif %}
     {% if body %}
+        <div style="border: 1px solid black; margin: 10px; padding: 10px;">
         <p>
             {{ body }}
         </p>
+        </div>
         <p>
             <a href="/edit/{{ page_title }}">Edit this page</a>
         </p>

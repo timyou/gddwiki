@@ -125,6 +125,25 @@ class ViewRevisionListHandler(BaseRequestHandler):
                                                        })
 
 
+class ViewDiffHandler(BaseRequestHandler):
+
+    def get(self, page_title, first_revision, second_revision):
+        entry = WikiContent.gql('WHERE title = :1', page_title).get()
+
+        if entry:
+            first_revision = WikiRevision.gql('WHERE wiki_page =  :1 '
+                                              'AND version_number = :2', entry, int(first_revision)).get()
+            second_revision = WikiRevision.gql('WHERE wiki_page =  :1 '
+                                              'AND version_number = :2', entry, int(second_revision)).get()
+
+            import diff
+            body = diff.textDiff(first_revision.revision_body, second_revision.revision_body)
+
+            self.generate('view_diff.html', template_values={'page_title': page_title,
+                                                             'body': body,
+                                                             })
+
+
 class ViewHandler(BaseRequestHandler):
   """This class defines the request handler that handles all requests to the
      URL http://wikiapp.appspot.com/view/*
@@ -426,6 +445,7 @@ class SendAdminEmail(BaseRequestHandler):
 _WIKI_URLS = [('/', MainHandler),
               ('/view/([^/]+)/?(\d+)?', ViewHandler),
               ('/revisionlist/([^/]+)', ViewRevisionListHandler),
+              ('/viewdiff/([^/]+)/(\d+)/(\d+)', ViewDiffHandler),
               ('/edit/([^/]+)', EditHandler),
               ('/save/([^/]+)', SaveHandler),
               ('/user/([^/]+)', UserProfileHandler),
