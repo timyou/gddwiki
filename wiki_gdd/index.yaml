@@ -23,7 +23,7 @@ indexes:
   - name: version
     direction: desc
 
-# Used 5 times in query history.
+# Used 7 times in query history.
 - kind: WikiRevision
   properties:
   - name: wiki_page

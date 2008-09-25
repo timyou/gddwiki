@@ -4,7 +4,9 @@
 <h1>{{ page_title }}<br /></h1>
 
 {% for revision in revisions %}
-  {{ revision.version_number }}
+<ul>
+  <li><a href="/view/{{ page_title }}/{{ revision.version_number }}">{{ revision.version_number }}</a></li>
+</ul>
 {% endfor %}
 
 {% endblock %}
