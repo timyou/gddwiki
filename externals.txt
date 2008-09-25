@@ -1,0 +1,6 @@
+#
+# Create this file: svn propget svn:externals . > externals.txt
+# Apply this file:  svn propset svn:externals -F externals.txt .
+#
+
+wrappers https://svn.yaco.es/mymem/src/mymem-refactor/wrappers
