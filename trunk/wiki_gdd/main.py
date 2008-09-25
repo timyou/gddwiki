@@ -130,7 +130,7 @@ class ViewHandler(BaseRequestHandler):
      URL http://wikiapp.appspot.com/view/*
   """
 
-  def get_page_content(self, page_title):
+  def get_page_content(self, page_title, revision_number=1):
     """When memcache lookup fails, we want to query the information from
        the datastore and return it.  If the data isn't in the data store,
        simply return empty strings
@@ -140,15 +140,19 @@ class ViewHandler(BaseRequestHandler):
 
     if entry:
       # Retrieve the current version
-      current_version = WikiRevision.gql('WHERE wiki_page =  :1 '
-                                         'ORDER BY version_number DESC', entry).get()
+      if revision_number is not None:
+          requested_version = WikiRevision.gql('WHERE wiki_page =  :1 '
+                                               'AND version_number = :2', entry, int(revision_number)).get()
+      else:
+          requested_version = WikiRevision.gql('WHERE wiki_page =  :1 '
+                                               'ORDER BY version_number DESC', entry).get()
       # Define the body, version number, author email, author nickname
       # and revision date
-      body = current_version.revision_body
-      version = current_version.version_number
-      author_email = urllib.quote(current_version.author.wiki_user.email())
-      author_nickname = current_version.author.wiki_user.nickname()
-      version_date = current_version.created
+      body = requested_version.revision_body
+      version = requested_version.version_number
+      author_email = urllib.quote(requested_version.author.wiki_user.email())
+      author_nickname = requested_version.author.wiki_user.nickname()
+      version_date = requested_version.created
       # Replace all wiki words with links to those wiki pages
       wiki_body, count = _WIKI_WORD.subn(r'<a href="/view/\1">\1</a>',
                                          body)
@@ -164,29 +168,29 @@ class ViewHandler(BaseRequestHandler):
 
     return [wiki_body, author_email, author_nickname, version, version_date]
 
-  def get_content(self, page_title):
+  def get_content(self, page_title, revision_number):
     """Checks memcache for the page.  If the page exists in memcache, it
        returns the information.  If not, it calls get_page_content, gets the
        page content from the datastore and sets the memcache with that info
     """
     # check memcache
-    page_content = memcache.get(page_title)
+    page_content = memcache.get("%s-%s" % (page_title, revision_number))
     # if it is there, return it, or get the info and set it to memcache
     if page_content is not None:
       return page_content
     else:
-      page_content = self.get_page_content(page_title)
-      memcache.set(page_title, page_content, 600)
+      page_content = self.get_page_content(page_title, revision_number)
+      memcache.set("%s-%s" % (page_title, revision_number), page_content, 600)
     return page_content
 
-  def get(self, page_title):
+  def get(self, page_title, revision_number):
     """When we receive an HTTP Get request to the view pages, we query for
        the data, which comes either from the cache, if it exists.  If it 
        doesn't exist in the cache, we try the datastore, if not there, we 
        return empty strings.
     """
 
-    wiki_body, author_email, author_nickname, version, version_date = self.get_content(page_title)
+    wiki_body, author_email, author_nickname, version, version_date = self.get_content(page_title, revision_number)
 
     # Render the template view.html, which extends base.html
     self.generate('view.html', template_values={'page_title': page_title,
@@ -420,8 +424,8 @@ class SendAdminEmail(BaseRequestHandler):
     self.generate('confirm_email.html')
 
 _WIKI_URLS = [('/', MainHandler),
-              ('/view/([^/]+)', ViewHandler),
-              ('/viewrevisionlist/([^/]+)', ViewRevisionListHandler),
+              ('/view/([^/]+)/?(\d+)?', ViewHandler),
+              ('/revisionlist/([^/]+)', ViewRevisionListHandler),
               ('/edit/([^/]+)', EditHandler),
               ('/save/([^/]+)', SaveHandler),
               ('/user/([^/]+)', UserProfileHandler),
