@@ -192,14 +192,8 @@ class ViewHandler(BaseRequestHandler):
        returns the information.  If not, it calls get_page_content, gets the
        page content from the datastore and sets the memcache with that info
     """
-    # check memcache
-    page_content = memcache.get("%s-%s" % (page_title, revision_number))
-    # if it is there, return it, or get the info and set it to memcache
-    if page_content is not None:
-      return page_content
-    else:
-      page_content = self.get_page_content(page_title, revision_number)
-      memcache.set("%s-%s" % (page_title, revision_number), page_content, 600)
+    page_content = self.get_page_content(page_title, revision_number)
+
     return page_content
 
   def get(self, page_title, revision_number):
