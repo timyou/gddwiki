@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<h1>{{ page_title }}<br /></h1>
+
+{% for revision in revisions %}
+  {{ revision.version_number }}
+{% endfor %}
+
+{% endblock %}
